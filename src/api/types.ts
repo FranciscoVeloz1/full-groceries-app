@@ -1,24 +1,20 @@
-export const GROCERIES_APP_SLUG = 'groceries-app' as const
-
-export type PermissionRole = 'READ_ONLY' | 'ADMIN'
-
-export type AppPermission = {
-  applicationId: string
-  applicationSlug: string
-  role: PermissionRole
-}
+export type UserRole = 'READ_ONLY' | 'ADMIN'
 
 export type AuthUser = {
   id: string
   email: string
   name: string
-  permissions: AppPermission[]
+  role: UserRole
 }
 
 export type LoginRequest = { email: string; password: string }
 
 export type LoginResponse = {
-  user: AuthUser
+  user: {
+    id: string
+    email: string
+    name: string
+  }
   accessToken: string
   refreshToken: string
 }
@@ -55,15 +51,10 @@ export type GroceryProduct = {
   updatedAt: string
 }
 
-export function hasGroceriesRole(
-  user: AuthUser | null,
-  minimum: PermissionRole
-): boolean {
-  if (!user) return false
+export function hasGroceriesRole(user: AuthUser | null, minimum: UserRole): boolean {
+  if (!user) {
+    return false
+  }
   const rank = { READ_ONLY: 1, ADMIN: 2 } as const
-  const membership = user.permissions.find(
-    (p) => p.applicationSlug === GROCERIES_APP_SLUG
-  )
-  if (!membership) return false
-  return rank[membership.role] >= rank[minimum]
+  return rank[user.role] >= rank[minimum]
 }

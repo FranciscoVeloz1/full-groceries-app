@@ -13,8 +13,18 @@ A mobile-first grocery listing web app. Browse products by category, build a sho
 
 - **React 19** + TypeScript
 - **Vite** (with React Compiler)
+- **TanStack Query** for groceries API data
 - **ExcelJS** (lazy-loaded for Excel export)
-- No backend — all data is static JSON, all logic runs client-side
+- Auth and catalog data come from **personal-api** (`VITE_API_BASE_URL`)
+
+## Auth model
+
+Accounts use a single global role from personal-api (`GET /api/v1/auth/me`):
+
+- `READ_ONLY` — browse categories and products
+- `ADMIN` — browse plus product admin mutations
+
+There are no per-application permission slugs. Login stores only a refresh token locally; the access token stays in memory.
 
 ## Getting Started
 
