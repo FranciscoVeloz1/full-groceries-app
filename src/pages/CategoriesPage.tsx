@@ -1,27 +1,29 @@
-import { useState } from "react";
-import { useCategories } from "../hooks/useCategories";
-import { SearchBar } from "../components/SearchBar";
-import { CategoryCard } from "../components/CategoryCard";
-import { CartBadge } from "../components/CartBadge";
-import styles from "./CategoriesPage.module.css";
+import { useState } from 'react'
+import { useCategories } from '../hooks/useCategories'
+import { SearchBar } from '../components/SearchBar'
+import { CategoryCard } from '../components/CategoryCard'
+import { CartBadge } from '../components/CartBadge'
+import styles from './CategoriesPage.module.css'
 
 type Props = {
-  onSelectCategory: (categoryId: number) => void;
-  cartCount: number;
-  onCartClick: () => void;
-};
+  onSelectCategory: (categoryId: string) => void
+  cartCount: number
+  onCartClick: () => void
+}
 
 export function CategoriesPage({
   onSelectCategory,
   cartCount,
   onCartClick,
 }: Props) {
-  const { entries } = useCategories();
-  const [search, setSearch] = useState("");
+  const { entries } = useCategories()
+  const [search, setSearch] = useState('')
 
   const filtered = search
-    ? entries.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
-    : entries;
+    ? entries.filter((category) =>
+        category.name.toLowerCase().includes(search.toLowerCase())
+      )
+    : entries
 
   return (
     <div className={styles.page}>
@@ -46,5 +48,5 @@ export function CategoriesPage({
         ))}
       </div>
     </div>
-  );
+  )
 }

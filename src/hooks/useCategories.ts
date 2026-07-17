@@ -1,10 +1,11 @@
-import { categories } from "../data/categories";
-import type { CategoryId } from "../types";
+import { useMemo } from 'react'
+import { categoryList } from '../data/categories'
 
 export function useCategories() {
-  const entries = (Object.entries(categories) as [string, string][]).map(
-    ([id, name]) => ({ id: Number(id) as CategoryId, name }),
-  );
+  const entries = useMemo(
+    () => categoryList.map(({ id, name }) => ({ id, name })),
+    []
+  )
 
-  return { categories, entries };
+  return { categories: categoryList, entries }
 }

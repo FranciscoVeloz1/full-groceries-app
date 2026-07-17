@@ -10,8 +10,8 @@ type Props = {
   items: CartItem[];
   totalPrice: number;
   onBack: () => void;
-  onUpdateQuantity: (productId: number, quantity: number) => void;
-  onRemove: (productId: number) => void;
+  onUpdateQuantity: (productId: string, quantity: number) => void;
+  onRemove: (productId: string) => void;
   onClear: () => void;
   onImport: (items: CartItem[]) => void;
 };
@@ -25,7 +25,10 @@ export function CartPage({
   onClear,
   onImport,
 }: Props) {
-  const { categories } = useCategories();
+  const { categories: categoryEntries } = useCategories();
+  const categoryNameById = Object.fromEntries(
+    categoryEntries.map((category) => [category.id, category.name])
+  ) as Record<string, string>;
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleImportClick = () => {
@@ -47,9 +50,9 @@ export function CartPage({
     e.target.value = "";
   };
 
-  const grouped = new Map<number, CartItem[]>();
+  const grouped = new Map<string, CartItem[]>();
   for (const item of items) {
-    const cat = item.product.category;
+    const cat = item.product.categoryId;
     if (!grouped.has(cat)) grouped.set(cat, []);
     grouped.get(cat)!.push(item);
   }
@@ -103,7 +106,7 @@ export function CartPage({
             {Array.from(grouped.entries()).map(([catId, catItems]) => (
               <div key={catId} className={styles.group}>
                 <h2 className={styles.categoryName}>
-                  {categories[catId as keyof typeof categories]}
+                  {categoryNameById[catId] ?? `Category ${catId}`}
                 </h2>
                 {catItems.map((item) => (
                   <div key={item.product.id} className={styles.item}>

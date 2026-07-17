@@ -1,20 +1,20 @@
-import { useState } from "react";
-import { useProducts } from "../hooks/useProducts";
-import { useCategories } from "../hooks/useCategories";
-import { SearchBar } from "../components/SearchBar";
-import { ProductCard } from "../components/ProductCard";
-import { CartBadge } from "../components/CartBadge";
-import type { Product } from "../types";
-import styles from "./ProductListPage.module.css";
+import { useState } from 'react'
+import { useProducts } from '../hooks/useProducts'
+import { useCategories } from '../hooks/useCategories'
+import { SearchBar } from '../components/SearchBar'
+import { ProductCard } from '../components/ProductCard'
+import { CartBadge } from '../components/CartBadge'
+import type { Product } from '../types'
+import styles from './ProductListPage.module.css'
 
 type Props = {
-  categoryId: number;
-  onBack: () => void;
-  onAddToCart: (product: Product) => void;
-  onAddCustom: (item: { name: string; quantity: number; price: number }) => void;
-  cartCount: number;
-  onCartClick: () => void;
-};
+  categoryId: string
+  onBack: () => void
+  onAddToCart: (product: Product) => void
+  onAddCustom: (item: { name: string; quantity: number; price: number }) => void
+  cartCount: number
+  onCartClick: () => void
+}
 
 export function ProductListPage({
   categoryId,
@@ -24,21 +24,22 @@ export function ProductListPage({
   cartCount,
   onCartClick,
 }: Props) {
-  const [search, setSearch] = useState("");
-  const products = useProducts(categoryId, search);
+  const [search, setSearch] = useState('')
+  const products = useProducts(categoryId, search)
 
-  const { categories } = useCategories();
-  const categoryName = categories[categoryId as keyof typeof categories];
+  const { entries } = useCategories()
+  const categoryName =
+    entries.find((category) => category.id === categoryId)?.name ?? 'Products'
 
-  const [customName, setCustomName] = useState("");
-  const [customQty, setCustomQty] = useState("1");
-  const [customPrice, setCustomPrice] = useState("");
+  const [customName, setCustomName] = useState('')
+  const [customQty, setCustomQty] = useState('1')
+  const [customPrice, setCustomPrice] = useState('')
 
   const handleAddCustom = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = customName.trim();
-    const quantity = Number(customQty);
-    const price = Number(customPrice);
+    e.preventDefault()
+    const trimmed = customName.trim()
+    const quantity = Number(customQty)
+    const price = Number(customPrice)
     if (
       !trimmed ||
       Number.isNaN(quantity) ||
@@ -46,14 +47,14 @@ export function ProductListPage({
       Number.isNaN(price) ||
       price < 0
     ) {
-      return;
+      return
     }
 
-    onAddCustom({ name: trimmed, quantity, price });
-    setCustomName("");
-    setCustomQty("1");
-    setCustomPrice("");
-  };
+    onAddCustom({ name: trimmed, quantity, price })
+    setCustomName('')
+    setCustomQty('1')
+    setCustomPrice('')
+  }
 
   return (
     <div className={styles.page}>
@@ -81,7 +82,7 @@ export function ProductListPage({
       </div>
       <SearchBar value={search} onChange={setSearch} />
 
-      {categoryId === 5 && (
+      {categoryId === '5' && (
         <form className={styles.addForm} onSubmit={handleAddCustom}>
           <h2 className={styles.addFormTitle}>Add item manually</h2>
           <div className={styles.addFormFields}>
@@ -93,7 +94,7 @@ export function ProductListPage({
                 placeholder="Product name"
                 value={customName}
                 onChange={(e) => {
-                  setCustomName(e.target.value);
+                  setCustomName(e.target.value)
                 }}
                 required
               />
@@ -107,7 +108,7 @@ export function ProductListPage({
                 min={1}
                 value={customQty}
                 onChange={(e) => {
-                  setCustomQty(e.target.value);
+                  setCustomQty(e.target.value)
                 }}
                 required
               />
@@ -122,7 +123,7 @@ export function ProductListPage({
                 step={0.01}
                 value={customPrice}
                 onChange={(e) => {
-                  setCustomPrice(e.target.value);
+                  setCustomPrice(e.target.value)
                 }}
                 required
               />
@@ -138,12 +139,12 @@ export function ProductListPage({
         {products.map((product) => {
           return (
             <ProductCard key={product.id} product={product} onAdd={onAddToCart} />
-          );
+          )
         })}
         {products.length === 0 ? (
           <p className={styles.empty}>No products found.</p>
         ) : null}
       </div>
     </div>
-  );
+  )
 }
