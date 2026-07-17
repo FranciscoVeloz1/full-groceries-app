@@ -37,3 +37,49 @@ export async function getProduct(
   const result = await request<ProductResponse>(`/api/v1/groceries/products/${id}`)
   return result.product
 }
+
+export type CreateProductBody = {
+  name: string
+  image?: string
+  categoryId: string
+  price: number
+}
+
+export type UpdateProductBody = Partial<{
+  name: string
+  image: string
+  categoryId: string
+  price: number
+}>
+
+export async function createProduct(
+  request: AuthorizedRequest,
+  body: CreateProductBody
+): Promise<GroceryProduct> {
+  const result = await request<ProductResponse>('/api/v1/groceries/products', {
+    method: 'POST',
+    body,
+  })
+  return result.product
+}
+
+export async function updateProduct(
+  request: AuthorizedRequest,
+  id: string,
+  body: UpdateProductBody
+): Promise<GroceryProduct> {
+  const result = await request<ProductResponse>(`/api/v1/groceries/products/${id}`, {
+    method: 'PATCH',
+    body,
+  })
+  return result.product
+}
+
+export async function deleteProduct(
+  request: AuthorizedRequest,
+  id: string
+): Promise<void> {
+  await request<void>(`/api/v1/groceries/products/${id}`, {
+    method: 'DELETE',
+  })
+}

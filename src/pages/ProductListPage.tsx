@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import type { GroceryProduct } from '../api/types'
 import { ApiError } from '../api/http'
+import { useAuth } from '../auth/useAuth'
+import { AdminNavLink } from '../components/AdminNavLink'
 import { CartBadge } from '../components/CartBadge'
 import { ProductCard } from '../components/ProductCard'
 import { SearchBar } from '../components/SearchBar'
@@ -26,6 +28,7 @@ function toProduct(product: GroceryProduct): Product {
 export function ProductListPage() {
   const { categoryId = '' } = useParams()
   const navigate = useNavigate()
+  const { isGroceriesAdmin } = useAuth()
   const { addToCart, addCustomItem, totalItems } = useCart()
   const [search, setSearch] = useState('')
 
@@ -120,12 +123,15 @@ export function ProductListPage() {
           </svg>
         </button>
         <h1 className={styles.title}>{categoryName}</h1>
-        <CartBadge
-          count={totalItems}
-          onClick={() => {
-            navigate('/cart')
-          }}
-        />
+        <div className={styles.headerActions}>
+          {isGroceriesAdmin ? <AdminNavLink /> : null}
+          <CartBadge
+            count={totalItems}
+            onClick={() => {
+              navigate('/cart')
+            }}
+          />
+        </div>
       </div>
 
       <SearchBar

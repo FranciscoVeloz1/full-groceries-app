@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { ApiError } from '../api/http'
 import { useAuth } from '../auth/useAuth'
+import { AdminNavLink } from '../components/AdminNavLink'
 import { CategoryCard } from '../components/CategoryCard'
 import { CartBadge } from '../components/CartBadge'
 import { SearchBar } from '../components/SearchBar'
@@ -11,7 +12,7 @@ import styles from './CategoriesPage.module.css'
 
 export function CategoriesPage() {
   const navigate = useNavigate()
-  const { canBrowseGroceries } = useAuth()
+  const { canBrowseGroceries, isGroceriesAdmin } = useAuth()
   const { totalItems } = useCart()
   const { data, isLoading, isError, error } = useCategoriesQuery()
   const [search, setSearch] = useState('')
@@ -56,12 +57,15 @@ export function CategoriesPage() {
     <div className={styles.page}>
       <div className={styles.header}>
         <h1 className={styles.title}>Categorías</h1>
-        <CartBadge
-          count={totalItems}
-          onClick={() => {
-            navigate('/cart')
-          }}
-        />
+        <div className={styles.headerActions}>
+          {isGroceriesAdmin ? <AdminNavLink /> : null}
+          <CartBadge
+            count={totalItems}
+            onClick={() => {
+              navigate('/cart')
+            }}
+          />
+        </div>
       </div>
 
       <SearchBar
