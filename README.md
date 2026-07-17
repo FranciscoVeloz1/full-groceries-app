@@ -32,7 +32,9 @@ npm run preview
 
 ## Deployment
 
-Configured for GitHub Pages with `base: '/groceries-app/'` in `vite.config.ts`.
+Configured for GitHub Pages with `base: '/full-groceries-app/'` in `vite.config.ts`.
+
+Live site: https://franciscoveloz1.github.io/full-groceries-app/
 
 ## Project Structure
 
