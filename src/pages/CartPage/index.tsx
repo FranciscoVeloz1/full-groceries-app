@@ -1,10 +1,10 @@
 import { useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useCart } from '../hooks/useCart'
-import { useCategoriesQuery } from '../hooks/useCategoriesQuery'
-import { exportToExcel } from '../utils/exportToExcel'
-import { exportToJson } from '../utils/exportToJson'
-import { parseGroceryList } from '../utils/groceryList'
+import { useCart } from '../../hooks/useCart'
+import { useCategoriesQuery } from '../../hooks/useCategoriesQuery'
+import { exportToExcel } from '../../utils/exportToExcel'
+import { exportToJson } from '../../utils/exportToJson'
+import { parseGroceryList } from '../../utils/groceryList'
 import styles from './CartPage.module.css'
 
 export function CartPage() {

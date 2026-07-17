@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
-import { ApiError } from '../api/http'
-import { useAuth } from '../auth/useAuth'
+import { ApiError } from '../../api/http'
+import { useAuth } from '../../auth/useAuth'
 import styles from './LoginPage.module.css'
 
 export function LoginPage() {

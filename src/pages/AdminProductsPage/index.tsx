@@ -1,12 +1,12 @@
 import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { GroceryProduct } from '../api/types'
-import { ApiError } from '../api/http'
-import { IconButton } from '../components/IconButton'
-import { useCategoriesQuery } from '../hooks/useCategoriesQuery'
-import { useProductMutations } from '../hooks/useProductMutations'
-import { useProductsQuery } from '../hooks/useProductsQuery'
+import type { GroceryProduct } from '../../api/types'
+import { ApiError } from '../../api/http'
+import { IconButton } from '../../components/IconButton'
+import { useCategoriesQuery } from '../../hooks/useCategoriesQuery'
+import { useProductMutations } from '../../hooks/useProductMutations'
+import { useProductsQuery } from '../../hooks/useProductsQuery'
 import styles from './AdminProductsPage.module.css'
 
 type FormMode = 'create' | 'edit' | null
