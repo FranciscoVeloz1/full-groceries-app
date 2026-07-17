@@ -33,6 +33,7 @@ npm run preview
 ## Deployment
 
 Configured for GitHub Pages with `base: '/full-groceries-app/'` in `vite.config.ts`.
+Production builds use `VITE_API_BASE_URL=https://personal-api-production-3ca6.up.railway.app` (see `.github/workflows/deploy.yml`).
 
 Live site: https://franciscoveloz1.github.io/full-groceries-app/
 
