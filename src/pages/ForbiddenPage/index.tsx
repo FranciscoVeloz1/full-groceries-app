@@ -9,7 +9,7 @@ export function ForbiddenPage() {
     <div className={styles.page}>
       <h1 className={styles.title}>Acceso restringido</h1>
       <p className={styles.message}>
-        Tu cuenta no tiene permiso para usar la app de mandado. Contacta a un administrador
+        Tu cuenta no tiene el rol necesario para usar Mandado. Contacta a un administrador
         si necesitas acceso.
       </p>
       <div className={styles.actions}>
