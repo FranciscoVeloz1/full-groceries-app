@@ -1,9 +1,11 @@
 import type { CartItem } from "../hooks/useCart";
-import { categoryNameById } from "../data/categories";
 import { downloadFile } from "./downloadFile";
 import { FILE_BASENAME } from "./groceryList";
 
-export async function exportToExcel(items: CartItem[]) {
+export async function exportToExcel(
+  items: CartItem[],
+  categoryNameById: Record<string, string> = {},
+) {
   const ExcelJS = await import("exceljs");
   const workbook = new ExcelJS.default.Workbook();
   const sheet = workbook.addWorksheet("Lista de Mandado");

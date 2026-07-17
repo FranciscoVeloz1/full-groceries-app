@@ -1,52 +1,92 @@
-import { useState } from 'react'
-import { useCategories } from '../hooks/useCategories'
-import { SearchBar } from '../components/SearchBar'
+import { useMemo, useState } from 'react'
+import { Navigate, useNavigate } from 'react-router-dom'
+import { ApiError } from '../api/http'
+import { useAuth } from '../auth/useAuth'
 import { CategoryCard } from '../components/CategoryCard'
 import { CartBadge } from '../components/CartBadge'
+import { SearchBar } from '../components/SearchBar'
+import { useCart } from '../hooks/useCart'
+import { useCategoriesQuery } from '../hooks/useCategoriesQuery'
 import styles from './CategoriesPage.module.css'
 
-type Props = {
-  onSelectCategory: (categoryId: string) => void
-  cartCount: number
-  onCartClick: () => void
-}
-
-export function CategoriesPage({
-  onSelectCategory,
-  cartCount,
-  onCartClick,
-}: Props) {
-  const { entries } = useCategories()
+export function CategoriesPage() {
+  const navigate = useNavigate()
+  const { canBrowseGroceries } = useAuth()
+  const { totalItems } = useCart()
+  const { data, isLoading, isError, error } = useCategoriesQuery()
   const [search, setSearch] = useState('')
 
-  const filtered = search
-    ? entries.filter((category) =>
-        category.name.toLowerCase().includes(search.toLowerCase())
-      )
-    : entries
+  const filtered = useMemo(() => {
+    const categories = data ?? []
+    if (!search) return categories
+    const term = search.toLowerCase()
+    return categories.filter((category) =>
+      category.name.toLowerCase().includes(term)
+    )
+  }, [data, search])
+
+  if (!canBrowseGroceries) {
+    return <Navigate to="/forbidden" replace />
+  }
+
+  if (isLoading) {
+    return (
+      <div className={styles.page}>
+        <p className={styles.status}>Cargando categorías…</p>
+      </div>
+    )
+  }
+
+  if (isError) {
+    const message =
+      error instanceof ApiError && error.status === 403
+        ? 'Necesitas acceso a la app de mandado para ver las categorías.'
+        : error instanceof Error
+          ? error.message
+          : 'No se pudieron cargar las categorías.'
+
+    return (
+      <div className={styles.page}>
+        <p className={styles.error}>{message}</p>
+      </div>
+    )
+  }
 
   return (
     <div className={styles.page}>
       <div className={styles.header}>
-        <h1 className={styles.title}>Categories</h1>
-        <CartBadge count={cartCount} onClick={onCartClick} />
+        <h1 className={styles.title}>Categorías</h1>
+        <CartBadge
+          count={totalItems}
+          onClick={() => {
+            navigate('/cart')
+          }}
+        />
       </div>
 
       <SearchBar
         value={search}
         onChange={setSearch}
-        placeholder="Search for a category..."
+        placeholder="Buscar categoría…"
       />
 
-      <div className={styles.grid}>
-        {filtered.map((cat) => (
-          <CategoryCard
-            key={cat.id}
-            name={cat.name}
-            onClick={() => onSelectCategory(cat.id)}
-          />
-        ))}
-      </div>
+      {filtered.length === 0 ? (
+        <p className={styles.empty}>
+          {search ? 'No se encontraron categorías.' : 'No hay categorías disponibles.'}
+        </p>
+      ) : (
+        <div className={styles.grid}>
+          {filtered.map((category) => (
+            <CategoryCard
+              key={category.id}
+              name={category.name}
+              onClick={() => {
+                navigate(`/products/${category.id}`)
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

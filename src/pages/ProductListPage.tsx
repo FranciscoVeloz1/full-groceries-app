@@ -1,42 +1,57 @@
-import { useState } from 'react'
-import { useProducts } from '../hooks/useProducts'
-import { useCategories } from '../hooks/useCategories'
-import { SearchBar } from '../components/SearchBar'
-import { ProductCard } from '../components/ProductCard'
+import { useMemo, useState } from 'react'
+import { useNavigate, useParams } from 'react-router-dom'
+import type { GroceryProduct } from '../api/types'
+import { ApiError } from '../api/http'
 import { CartBadge } from '../components/CartBadge'
+import { ProductCard } from '../components/ProductCard'
+import { SearchBar } from '../components/SearchBar'
+import { useCart } from '../hooks/useCart'
+import { useCategoriesQuery } from '../hooks/useCategoriesQuery'
+import { useProductsQuery } from '../hooks/useProductsQuery'
 import type { Product } from '../types'
 import styles from './ProductListPage.module.css'
 
-type Props = {
-  categoryId: string
-  onBack: () => void
-  onAddToCart: (product: Product) => void
-  onAddCustom: (item: { name: string; quantity: number; price: number }) => void
-  cartCount: number
-  onCartClick: () => void
+const EXTRAS_CATEGORY_NAME = 'Extras'
+
+function toProduct(product: GroceryProduct): Product {
+  return {
+    id: product.id,
+    name: product.name,
+    image: product.image,
+    categoryId: product.categoryId,
+    price: product.price,
+  }
 }
 
-export function ProductListPage({
-  categoryId,
-  onBack,
-  onAddToCart,
-  onAddCustom,
-  cartCount,
-  onCartClick,
-}: Props) {
+export function ProductListPage() {
+  const { categoryId = '' } = useParams()
+  const navigate = useNavigate()
+  const { addToCart, addCustomItem, totalItems } = useCart()
   const [search, setSearch] = useState('')
-  const products = useProducts(categoryId, search)
 
-  const { entries } = useCategories()
+  const categoriesQuery = useCategoriesQuery()
+  const productsQuery = useProductsQuery({ categoryId })
+
   const categoryName =
-    entries.find((category) => category.id === categoryId)?.name ?? 'Products'
+    categoriesQuery.data?.find((category) => category.id === categoryId)?.name ??
+    'Productos'
+
+  const isExtrasCategory = categoryName === EXTRAS_CATEGORY_NAME
+
+  const products = useMemo(() => {
+    const items = productsQuery.data ?? []
+    if (!search) return items
+
+    const term = search.toLowerCase()
+    return items.filter((product) => product.name.toLowerCase().includes(term))
+  }, [productsQuery.data, search])
 
   const [customName, setCustomName] = useState('')
   const [customQty, setCustomQty] = useState('1')
   const [customPrice, setCustomPrice] = useState('')
 
-  const handleAddCustom = (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleAddCustom = (event: React.FormEvent) => {
+    event.preventDefault()
     const trimmed = customName.trim()
     const quantity = Number(customQty)
     const price = Number(customPrice)
@@ -50,10 +65,34 @@ export function ProductListPage({
       return
     }
 
-    onAddCustom({ name: trimmed, quantity, price })
+    addCustomItem({ name: trimmed, quantity, price, categoryId })
     setCustomName('')
     setCustomQty('1')
     setCustomPrice('')
+  }
+
+  if (categoriesQuery.isLoading || productsQuery.isLoading) {
+    return (
+      <div className={styles.page}>
+        <p className={styles.status}>Cargando productos…</p>
+      </div>
+    )
+  }
+
+  if (categoriesQuery.isError || productsQuery.isError) {
+    const queryError = productsQuery.error ?? categoriesQuery.error
+    const message =
+      queryError instanceof ApiError && queryError.status === 403
+        ? 'Necesitas acceso a la app de mandado para ver los productos.'
+        : queryError instanceof Error
+          ? queryError.message
+          : 'No se pudieron cargar los productos.'
+
+    return (
+      <div className={styles.page}>
+        <p className={styles.error}>{message}</p>
+      </div>
+    )
   }
 
   return (
@@ -61,8 +100,11 @@ export function ProductListPage({
       <div className={styles.header}>
         <button
           className={styles.backBtn}
-          onClick={onBack}
-          aria-label="Go back"
+          onClick={() => {
+            navigate('/')
+          }}
+          aria-label="Volver"
+          type="button"
         >
           <svg
             width="22"
@@ -78,43 +120,53 @@ export function ProductListPage({
           </svg>
         </button>
         <h1 className={styles.title}>{categoryName}</h1>
-        <CartBadge count={cartCount} onClick={onCartClick} />
+        <CartBadge
+          count={totalItems}
+          onClick={() => {
+            navigate('/cart')
+          }}
+        />
       </div>
-      <SearchBar value={search} onChange={setSearch} />
 
-      {categoryId === '5' && (
+      <SearchBar
+        value={search}
+        onChange={setSearch}
+        placeholder="Buscar producto…"
+      />
+
+      {isExtrasCategory ? (
         <form className={styles.addForm} onSubmit={handleAddCustom}>
-          <h2 className={styles.addFormTitle}>Add item manually</h2>
+          <h2 className={styles.addFormTitle}>Agregar artículo manualmente</h2>
           <div className={styles.addFormFields}>
             <label className={styles.addField}>
-              <span className={styles.addLabel}>Name</span>
+              <span className={styles.addLabel}>Nombre</span>
               <input
                 className={styles.addInput}
                 type="text"
-                placeholder="Product name"
+                placeholder="Nombre del producto"
                 value={customName}
-                onChange={(e) => {
-                  setCustomName(e.target.value)
+                onChange={(event) => {
+                  setCustomName(event.target.value)
                 }}
                 required
               />
             </label>
             <label className={styles.addField}>
-              <span className={styles.addLabel}>Quantity</span>
+              <span className={styles.addLabel}>Cantidad</span>
               <input
                 className={styles.addInput}
                 type="number"
                 placeholder="1"
                 min={1}
                 value={customQty}
-                onChange={(e) => {
-                  setCustomQty(e.target.value)
+                onChange={(event) => {
+                  setCustomQty(event.target.value)
                 }}
                 required
               />
             </label>
             <label className={styles.addField}>
-              <span className={styles.addLabel}>Unit price</span>
+              <span className={styles.addLabel}>Precio unitario</span>
               <input
                 className={styles.addInput}
                 type="number"
@@ -122,27 +174,29 @@ export function ProductListPage({
                 min={0}
                 step={0.01}
                 value={customPrice}
-                onChange={(e) => {
-                  setCustomPrice(e.target.value)
+                onChange={(event) => {
+                  setCustomPrice(event.target.value)
                 }}
                 required
               />
             </label>
           </div>
           <button className={styles.addBtn} type="submit">
-            Add
+            Agregar
           </button>
         </form>
-      )}
+      ) : null}
 
       <div className={styles.grid}>
-        {products.map((product) => {
-          return (
-            <ProductCard key={product.id} product={product} onAdd={onAddToCart} />
-          )
-        })}
+        {products.map((product) => (
+          <ProductCard
+            key={product.id}
+            product={toProduct(product)}
+            onAdd={addToCart}
+          />
+        ))}
         {products.length === 0 ? (
-          <p className={styles.empty}>No products found.</p>
+          <p className={styles.empty}>No se encontraron productos.</p>
         ) : null}
       </div>
     </div>
