@@ -1,60 +1,34 @@
-import { useState } from "react";
-import { CategoriesPage } from "./pages/CategoriesPage";
-import { ProductListPage } from "./pages/ProductListPage";
-import { CartPage } from "./pages/CartPage";
-import { useCart } from "./hooks/useCart";
-
-type View =
-  | { page: "categories" }
-  | { page: "products"; categoryId: number }
-  | { page: "cart" };
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { RequireAdmin } from './auth/RequireAdmin'
+import { RequireAuth } from './auth/RequireAuth'
+import { CartProvider } from './cart/CartProvider'
+import { AdminProductsPage } from './pages/AdminProductsPage'
+import { CartPage } from './pages/CartPage'
+import { CategoriesPage } from './pages/CategoriesPage'
+import { ForbiddenPage } from './pages/ForbiddenPage'
+import { LoginPage } from './pages/LoginPage'
+import { ProductListPage } from './pages/ProductListPage'
 
 const App = () => {
-  const cart = useCart();
-  const [view, setView] = useState<View>({ page: "categories" });
-  const [prevView, setPrevView] = useState<View>({ page: "categories" });
-
-  const goToCart = () => {
-    setPrevView(view);
-    setView({ page: "cart" });
-  };
-
-  if (view.page === "cart") {
-    return (
-      <CartPage
-        items={cart.items}
-        totalPrice={cart.totalPrice}
-        onBack={() => setView(prevView)}
-        onUpdateQuantity={cart.updateQuantity}
-        onRemove={cart.removeFromCart}
-        onClear={cart.clearCart}
-        onImport={cart.importCart}
-      />
-    );
-  }
-
-  if (view.page === "products") {
-    return (
-      <ProductListPage
-        categoryId={view.categoryId}
-        onBack={() => setView({ page: "categories" })}
-        onAddToCart={cart.addToCart}
-        onAddCustom={cart.addCustomItem}
-        cartCount={cart.totalItems}
-        onCartClick={goToCart}
-      />
-    );
-  }
-
   return (
-    <CategoriesPage
-      onSelectCategory={(categoryId) =>
-        setView({ page: "products", categoryId })
-      }
-      cartCount={cart.totalItems}
-      onCartClick={goToCart}
-    />
-  );
-};
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <CartProvider>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route element={<RequireAuth />}>
+            <Route path="/" element={<CategoriesPage />} />
+            <Route path="/products/:categoryId" element={<ProductListPage />} />
+            <Route path="/cart" element={<CartPage />} />
+            <Route path="/forbidden" element={<ForbiddenPage />} />
+            <Route element={<RequireAdmin />}>
+              <Route path="/admin/products" element={<AdminProductsPage />} />
+            </Route>
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </CartProvider>
+    </BrowserRouter>
+  )
+}
 
-export default App;
+export default App

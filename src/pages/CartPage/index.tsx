@@ -1,57 +1,53 @@
-import { useRef } from "react";
-import type { CartItem } from "../hooks/useCart";
-import { useCategories } from "../hooks/useCategories";
-import { exportToExcel } from "../utils/exportToExcel";
-import { exportToJson } from "../utils/exportToJson";
-import { parseGroceryList } from "../utils/groceryList";
-import styles from "./CartPage.module.css";
+import { useMemo, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useCart } from '../../hooks/useCart'
+import { useCategoriesQuery } from '../../hooks/useCategoriesQuery'
+import { exportToExcel } from '../../utils/exportToExcel'
+import { exportToJson } from '../../utils/exportToJson'
+import { parseGroceryList } from '../../utils/groceryList'
+import styles from './CartPage.module.css'
 
-type Props = {
-  items: CartItem[];
-  totalPrice: number;
-  onBack: () => void;
-  onUpdateQuantity: (productId: number, quantity: number) => void;
-  onRemove: (productId: number) => void;
-  onClear: () => void;
-  onImport: (items: CartItem[]) => void;
-};
-
-export function CartPage({
-  items,
-  totalPrice,
-  onBack,
-  onUpdateQuantity,
-  onRemove,
-  onClear,
-  onImport,
-}: Props) {
-  const { categories } = useCategories();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+export function CartPage() {
+  const navigate = useNavigate()
+  const {
+    items,
+    totalPrice,
+    updateQuantity,
+    removeFromCart,
+    clearCart,
+    importCart,
+  } = useCart()
+  const { data: categories = [] } = useCategoriesQuery()
+  const categoryNameById = useMemo(
+    () => Object.fromEntries(categories.map((category) => [category.id, category.name])),
+    [categories]
+  )
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const handleImportClick = () => {
-    fileInputRef.current?.click();
-  };
+    fileInputRef.current?.click()
+  }
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
 
     try {
-      const raw = await file.text();
-      const parsed = parseGroceryList(raw);
-      onImport(parsed);
+      const raw = await file.text()
+      const parsed = parseGroceryList(raw)
+      importCart(parsed)
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Failed to import file.");
+      alert(err instanceof Error ? err.message : 'No se pudo importar el archivo.')
     }
 
-    e.target.value = "";
-  };
+    event.target.value = ''
+  }
 
-  const grouped = new Map<number, CartItem[]>();
+  const grouped = new Map<string, typeof items>()
   for (const item of items) {
-    const cat = item.product.category;
-    if (!grouped.has(cat)) grouped.set(cat, []);
-    grouped.get(cat)!.push(item);
+    const cat = item.product.categoryId
+    if (!grouped.has(cat)) grouped.set(cat, [])
+    grouped.get(cat)!.push(item)
   }
 
   return (
@@ -59,8 +55,11 @@ export function CartPage({
       <div className={styles.header}>
         <button
           className={styles.backBtn}
-          onClick={onBack}
-          aria-label="Go back"
+          onClick={() => {
+            navigate(-1)
+          }}
+          aria-label="Volver"
+          type="button"
         >
           <svg
             width="22"
@@ -75,10 +74,10 @@ export function CartPage({
             <polyline points="15 18 9 12 15 6" />
           </svg>
         </button>
-        <h1 className={styles.title}>Cart</h1>
+        <h1 className={styles.title}>Carrito</h1>
         <div className={styles.headerActions}>
-          <button className={styles.importBtn} onClick={handleImportClick}>
-            Import
+          <button className={styles.importBtn} onClick={handleImportClick} type="button">
+            Importar
           </button>
           <input
             ref={fileInputRef}
@@ -87,30 +86,28 @@ export function CartPage({
             onChange={handleFileChange}
             hidden
           />
-          {items.length > 0 && (
-            <button className={styles.clearBtn} onClick={onClear}>
-              Clear
+          {items.length > 0 ? (
+            <button className={styles.clearBtn} onClick={clearCart} type="button">
+              Vaciar
             </button>
-          )}
+          ) : null}
         </div>
       </div>
 
       {items.length === 0 ? (
-        <p className={styles.empty}>Your cart is empty.</p>
+        <p className={styles.empty}>Tu carrito está vacío.</p>
       ) : (
         <>
           <div className={styles.list}>
             {Array.from(grouped.entries()).map(([catId, catItems]) => (
               <div key={catId} className={styles.group}>
                 <h2 className={styles.categoryName}>
-                  {categories[catId as keyof typeof categories]}
+                  {categoryNameById[catId] ?? `Categoría ${catId}`}
                 </h2>
                 {catItems.map((item) => (
                   <div key={item.product.id} className={styles.item}>
                     <div className={styles.itemInfo}>
-                      <span className={styles.itemName}>
-                        {item.product.name}
-                      </span>
+                      <span className={styles.itemName}>{item.product.name}</span>
                       <span className={styles.itemPrice}>
                         ${(item.product.price * item.quantity).toFixed(2)}
                       </span>
@@ -119,12 +116,10 @@ export function CartPage({
                       <button
                         className={styles.qtyBtn}
                         onClick={() =>
-                          onUpdateQuantity(
-                            item.product.id,
-                            item.quantity - 1,
-                          )
+                          updateQuantity(item.product.id, item.quantity - 1)
                         }
-                        aria-label="Decrease quantity"
+                        aria-label="Disminuir cantidad"
+                        type="button"
                       >
                         -
                       </button>
@@ -132,19 +127,18 @@ export function CartPage({
                       <button
                         className={styles.qtyBtn}
                         onClick={() =>
-                          onUpdateQuantity(
-                            item.product.id,
-                            item.quantity + 1,
-                          )
+                          updateQuantity(item.product.id, item.quantity + 1)
                         }
-                        aria-label="Increase quantity"
+                        aria-label="Aumentar cantidad"
+                        type="button"
                       >
                         +
                       </button>
                       <button
                         className={styles.removeBtn}
-                        onClick={() => onRemove(item.product.id)}
-                        aria-label={`Remove ${item.product.name}`}
+                        onClick={() => removeFromCart(item.product.id)}
+                        aria-label={`Quitar ${item.product.name}`}
+                        type="button"
                       >
                         <svg
                           width="16"
@@ -172,27 +166,27 @@ export function CartPage({
           <div className={styles.footer}>
             <div className={styles.total}>
               <span>Total</span>
-              <span className={styles.totalPrice}>
-                ${totalPrice.toFixed(2)}
-              </span>
+              <span className={styles.totalPrice}>${totalPrice.toFixed(2)}</span>
             </div>
             <div className={styles.exportActions}>
               <button
                 className={styles.exportBtn}
-                onClick={() => exportToExcel(items)}
+                onClick={() => exportToExcel(items, categoryNameById)}
+                type="button"
               >
-                Export Excel
+                Exportar Excel
               </button>
               <button
                 className={styles.exportBtnSecondary}
                 onClick={() => exportToJson(items)}
+                type="button"
               >
-                Export JSON
+                Exportar JSON
               </button>
             </div>
           </div>
         </>
       )}
     </div>
-  );
+  )
 }

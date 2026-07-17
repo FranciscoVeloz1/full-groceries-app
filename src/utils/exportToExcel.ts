@@ -1,10 +1,11 @@
 import type { CartItem } from "../hooks/useCart";
-import { categories } from "../data/categories";
-import type { Categories } from "../types";
 import { downloadFile } from "./downloadFile";
 import { FILE_BASENAME } from "./groceryList";
 
-export async function exportToExcel(items: CartItem[]) {
+export async function exportToExcel(
+  items: CartItem[],
+  categoryNameById: Record<string, string> = {},
+) {
   const ExcelJS = await import("exceljs");
   const workbook = new ExcelJS.default.Workbook();
   const sheet = workbook.addWorksheet("Lista de Mandado");
@@ -22,9 +23,9 @@ export async function exportToExcel(items: CartItem[]) {
   ];
 
   // Group items by category
-  const grouped = new Map<number, CartItem[]>();
+  const grouped = new Map<string, CartItem[]>();
   for (const item of items) {
-    const cat = item.product.category;
+    const cat = item.product.categoryId;
     if (!grouped.has(cat)) grouped.set(cat, []);
     grouped.get(cat)!.push(item);
   }
@@ -33,8 +34,7 @@ export async function exportToExcel(items: CartItem[]) {
   const realSubtotalRefs: string[] = [];
 
   for (const [catId, catItems] of grouped) {
-    const catName =
-      categories[catId as keyof Categories] ?? `Categoría ${catId}`;
+    const catName = categoryNameById[catId] ?? `Categoría ${catId}`;
 
     // Category header row
     const headerRow = sheet.addRow([catName]);
